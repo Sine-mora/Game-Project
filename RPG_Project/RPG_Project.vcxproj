@@ -130,6 +130,7 @@
     <ClCompile Include="Game_Sprites.cpp" />
     <ClCompile Include="level_prologue.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainMenuButton.cpp" />
     <ClCompile Include="main_menu.cpp" />
     <ClCompile Include="SDL_Setup.cpp" />
   </ItemGroup>
@@ -138,6 +139,7 @@
     <ClInclude Include="Game_Sprites.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="level_prologue.h" />
+    <ClInclude Include="MainMenuButton.h" />
     <ClInclude Include="main_menu.h" />
     <ClInclude Include="SDL_Setup.h" />
   </ItemGroup>

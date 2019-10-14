@@ -3,6 +3,9 @@
 #include "Game_Sprites.h"
 
 Loop::Loop(int passed_ScreenWidth, int passed_ScreenHeight)
+	: m_eGameState(eMainMenu),
+	  m_btnNewGame(),
+	  m_mouseCoords{ 0, 0 }
 {
 	ScreenWidth = passed_ScreenWidth;
 	ScreenHeight = passed_ScreenHeight;
@@ -15,20 +18,44 @@ Loop::Loop(int passed_ScreenWidth, int passed_ScreenHeight)
 
 	main_MBtn = new Sprite(setup->GetRenderer(), "res/Menu_buttons.png", 0, 0, ScreenWidth, ScreenHeight);
 
-	passed_SrcR.x = 121;   passed_DestR.x = 154;
-	passed_SrcR.y = 0;     passed_DestR.y = 60;
-	passed_SrcR.w = 121;   passed_DestR.w = 300;
-	passed_SrcR.h = 31;    passed_DestR.h = 63;
+	passed_SrcR.x = 121;   passed_DestR.x = 203;
+	passed_SrcR.y = 0;     passed_DestR.y = 73;
+	passed_SrcR.w = 121;   passed_DestR.w = 403;
+	passed_SrcR.h = 31;    passed_DestR.h = 76;
+//	main_MBtn_H = new Sprite(setup->GetRenderer(), "res/New_game_strip2.png",  passed_SrcR, passed_DestR);
 
-	main_MBtn_H = new Sprite(setup->GetRenderer(), "res/New_game_strip2.png",  passed_SrcR, passed_DestR);
+	auto callback = [this]()
+	{
+		m_eGameState = ePlayGame;
+		std::cout << "Button pressed" << std::endl;
+	};
+	bool isSuccess = m_btnNewGame.Init(setup->GetRenderer(), "res/New_game_strip2.png", passed_DestR, callback);
+	if (!isSuccess)
+	{
+		exit(1);
+	}
+	passed_SrcR.x = 121;   passed_DestR.x = 181;
+	passed_SrcR.y = 0;     passed_DestR.y = 169;
+	passed_SrcR.w = 121;   passed_DestR.w = 448;
+	passed_SrcR.h = 31;    passed_DestR.h = 75;
+	main_LGBtn = new Sprite(setup->GetRenderer(), "res/Load_game_strip2.png", passed_SrcR, passed_DestR);
 
-	MouseX = 0;
-	MouseY = 0;
+	passed_SrcR.x = 121;   passed_DestR.x = 220;
+	passed_SrcR.y = 0;     passed_DestR.y = 260;
+	passed_SrcR.w = 121;   passed_DestR.w = 356;
+	passed_SrcR.h = 31;    passed_DestR.h = 82;
+	main_OpBtn = new Sprite(setup->GetRenderer(), "res/Options_strip2.png", passed_SrcR, passed_DestR);
+
+	passed_SrcR.x = 121;   passed_DestR.x = 290;
+	passed_SrcR.y = 0;     passed_DestR.y = 370;
+	passed_SrcR.w = 121;   passed_DestR.w = 270;
+	passed_SrcR.h = 31;    passed_DestR.h = 67;
+	main_ExtBtn = new Sprite(setup->GetRenderer(), "res/Exit_strip2.png", passed_SrcR, passed_DestR);
 
 
-	tileset = new Sprite(setup->GetRenderer(), "res/example_v1.1.png", 0, 0, ScreenWidth, ScreenHeight);
+	tileset = new Sprite(setup->GetRenderer(), "res/prologue map.png", 0, 0, ScreenWidth, ScreenHeight);
 
-	hero = new Sprite(setup->GetRenderer(), "res/hero.gif", 300, 250, 150, 150);
+	hero = new Sprite(setup->GetRenderer(), "res/hero.gif", -10, 100, 120, 120);
 
 	//hero = IMG_LoadTexture(setup->GetRenderer(), "res/chara_hero.png");
 }/*
@@ -55,50 +82,24 @@ Loop::~Loop()
 	delete main_MBtn;
 	delete main_MBtn_H;
 	delete setup;
-	//delete tileset;
-	//delete hero;
+	delete tileset;
+	delete hero;
 }
 
 void Loop::GameLoop()
 {
 	const Uint8* state = SDL_GetKeyboardState(NULL);
+	bool flag_menu = true;
+
 	
 	while (!quit && setup->GetMainEvent()->type != SDL_QUIT)
 	{
 		setup->Begin();
 
-		SDL_GetMouseState(&MouseX, &MouseY);
+		OnUpdate(setup->GetMainEvent());
+		OnDraw();
 
-		main_Menu_Background->Draw();
-
-		if ((MouseX > 154 && MouseY > 61) && (MouseX < 454 && MouseY < 124))
-		{
-			main_MBtn_H->DrawR();
-			std::cout << MouseX << " " << MouseY << std::endl;
-
-			if (setup->GetMainEvent()->type == SDL_MOUSEBUTTONDOWN)
-			{
-				std::cout << "Button pressed" << std::endl;
-				tileset->Draw();
-		        hero->Draw();
-
-			}
-		}
-		else
-		{
-		main_MBtn->Draw();
-		}
-
-
-
-
-
-
-		
-
-	
 		//Enable diagonal movement
-
 		/*if (state[SDL_SCANCODE_1]) {
 			printf("<1> is pressed.\n");
 		}
@@ -112,14 +113,26 @@ void Loop::GameLoop()
 			//hero->SetY(-1);
 			//hero->SetX(-2);
 		}*/
-	
-		/*if (setup->GetMainEvent()->button.button == SDL_MOUSEBUTTONDOWN)
-		{
-			std::cout << MouseX << " " << MouseY << std::endl;
-		}*/
 
+		setup->End();
+	}
+}
 
-/*
+void Loop::OnUpdate(SDL_Event* ptrEvent)
+{
+	SDL_GetMouseState(&m_mouseCoords.x, &m_mouseCoords.y);
+
+	//if (setup->GetMainEvent()->button.button == SDL_MOUSEBUTTONDOWN)
+	//{
+	//	std::cout << m_mouseCoords.x << " " << m_mouseCoords.y << std::endl;
+	//}
+
+	switch (m_eGameState)
+	{
+	case eMainMenu:
+		m_btnNewGame.OnTouch(ptrEvent, m_mouseCoords);
+		break;
+	case ePlayGame:
 		//TODO move to separate function
 		switch (setup->GetMainEvent()->type)
 		{
@@ -127,36 +140,57 @@ void Loop::GameLoop()
 			switch (setup->GetMainEvent()->key.keysym.sym)
 			{
 			case SDLK_ESCAPE:
-				quit = true;
+				m_eGameState = eMainMenu;
 				break;
+			case SDLK_q: quit = true; break;
 			case SDLK_w:
 				printf("W Keys Pressed.\n");
-				//hero->SetY(-3);
+				hero->SetY(-3);
 				break;
 			case SDLK_s:
-				//hero->SetY(+3);
+				hero->SetY(+3);
 				break;
 			case SDLK_a:
 				printf("A Keys Pressed.\n");
-				//hero->SetX(-3);
+				hero->SetX(-3);
 				break;
 			case SDLK_d:
-				//hero->SetX(+3);
+				hero->SetX(+3);
 				break;
 			default:
 				break;
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
-			if ((MouseX > 154 && MouseY > 61) && (MouseX < 454 && MouseY < 124))
+			if ((m_mouseCoords.x > 154 && m_mouseCoords.y > 61) && (m_mouseCoords.x < 454 && m_mouseCoords.y < 124))
 			{
-				std::cout << MouseX << " " << MouseY << std::endl;
+				std::cout << m_mouseCoords.x << " " << m_mouseCoords.y << std::endl;
 			}
-				break;
+			break;
 		default:
 			break;
 		}
-*/
-		setup->End();
+		break;
+	default:
+		break;
+	}
+}
+
+void Loop::OnDraw()
+{
+	std::cout << "state is " << m_eGameState << "\n";
+	switch (m_eGameState)
+	{
+	case eMainMenu:
+		main_Menu_Background->Draw();
+		main_MBtn->Draw();
+		m_btnNewGame.Draw();
+		break;
+	case ePlayGame:
+		tileset->Draw();
+		hero->Draw();
+		break;
+	default:
+		break;
 	}
 }
